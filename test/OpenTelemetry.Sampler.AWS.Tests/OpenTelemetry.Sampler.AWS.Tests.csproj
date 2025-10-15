@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="Wiremock.Net" />
+    <!-- Resolve NU1904 warning for https://github.com/advisories/GHSA-5rrx-jjjq-q2r5 -->
+    <PackageReference Include="Microsoft.AspNetCore.Server.Kestrel.Core" VersionOverride="2.3.6" />
   </ItemGroup>
 
   <ItemGroup>
