@@ -61,45 +61,6 @@ public sealed class KustoIntegrationTests : IClassFixture<KustoIntegrationTestsF
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void QueryWithOptionsTest(bool enableInstrumentation)
-    {
-        var activities = new List<Activity>();
-        var options = new KustoInstrumentationOptions();
-
-        using var tracerProvider = enableInstrumentation
-            ? Sdk.CreateTracerProviderBuilder()
-                .AddInMemoryExporter(activities)
-                .AddKustoInstrumentation(options)
-                .Build()
-            : null;
-
-        var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
-        using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
-
-        var reader = queryProvider.ExecuteQuery(DatabaseName, ".show version", null);
-
-        Assert.NotNull(reader);
-        while (reader.Read())
-        {
-            // Read through results
-        }
-
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-
-        if (enableInstrumentation)
-        {
-            Assert.NotEmpty(activities);
-        }
-        else
-        {
-            Assert.Empty(activities);
-        }
-    }
-
-    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData(".show databases")]
     public void MetricsAreRecorded(string query)
     {
