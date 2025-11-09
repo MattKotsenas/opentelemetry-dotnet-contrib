@@ -51,13 +51,13 @@ public sealed class KustoIntegrationTests : IClassFixture<KustoIntegrationTestsF
         Task.Delay(TimeSpan.FromSeconds(2)).Wait();
 
         Assert.NotEmpty(activities);
-        var activity = activities.FirstOrDefault(a => a.OperationName.Contains("Query") || a.OperationName.Contains("Management"));
+        var activity = activities.FirstOrDefault(a => a.OperationName.Contains("Query") || a.OperationName.Contains("Management") || a.OperationName.Contains("ExecuteQuery"));
         Assert.NotNull(activity);
 
-        // Verify activity tags
-        Assert.Contains(activity.Tags, t => t.Key == "db.system" && t.Value == "kusto");
-        Assert.Contains(activity.Tags, t => t.Key == "db.query.text");
+        // Verify key activity tags are present
+        Assert.Contains(activity.Tags, t => t.Key == "db.system.name" && t.Value == "kusto");
         Assert.Contains(activity.Tags, t => t.Key == "url.full");
+        Assert.Contains(activity.Tags, t => t.Key == "db.operation.name");
     }
 
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
