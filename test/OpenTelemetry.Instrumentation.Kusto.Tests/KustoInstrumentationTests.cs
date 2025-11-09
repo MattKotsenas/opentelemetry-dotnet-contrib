@@ -22,12 +22,35 @@ public class KustoInstrumentationTests
     public void AddKustoInstrumentation_WithOptions_DoesNotThrow()
     {
         var builder = Sdk.CreateTracerProviderBuilder();
-        var options = new KustoInstrumentationOptions
-        {
-        };
+        var options = new KustoInstrumentationOptions();
 
         var actual = builder.AddKustoInstrumentation(options);
 
         Assert.Same(builder, actual);
+    }
+
+    [Fact]
+    public void AddKustoInstrumentation_WithNullBuilder_ThrowsArgumentNullException()
+    {
+        TracerProviderBuilder? builder = null;
+
+        Assert.Throws<ArgumentNullException>(() => builder!.AddKustoInstrumentation());
+    }
+
+    [Fact]
+    public void AddKustoInstrumentation_WithNullOptions_ThrowsArgumentNullException()
+    {
+        var builder = Sdk.CreateTracerProviderBuilder();
+        KustoInstrumentationOptions? options = null;
+
+        Assert.Throws<ArgumentNullException>(() => builder.AddKustoInstrumentation(options!));
+    }
+
+    [Fact]
+    public void KustoInstrumentationOptions_CanBeCreated()
+    {
+        var options = new KustoInstrumentationOptions();
+
+        Assert.NotNull(options);
     }
 }
