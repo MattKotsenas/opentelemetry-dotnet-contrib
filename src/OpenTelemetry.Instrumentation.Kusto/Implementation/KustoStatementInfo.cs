@@ -5,13 +5,13 @@ namespace OpenTelemetry.Instrumentation.Kusto.Implementation;
 
 internal readonly struct KustoStatementInfo
 {
-    public KustoStatementInfo(string sanitizedQuery, string dbQuerySummary)
+    public KustoStatementInfo(string? summarized, string? sanitized)
     {
-        this.SanitizedQuery = sanitizedQuery;
-        this.DbQuerySummary = dbQuerySummary;
+        this.Summarized = summarized;
+        this.Sanitized = sanitized;
     }
 
-    public string SanitizedQuery { get; }
+    public string? Summarized { get; }
 
-    public string DbQuerySummary { get; }
+    public string? Sanitized { get; }
 }

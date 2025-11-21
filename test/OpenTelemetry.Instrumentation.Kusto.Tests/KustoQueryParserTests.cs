@@ -370,10 +370,9 @@ public class KustoQueryParserTests
     [MemberData(nameof(QuerySummaryTestCases))]
     public void GenerateQuerySummary_ReturnsExpectedSummary(string query, string? expectedSummary, string? expectedSanitizedQuery)
     {
-        var summarizedQuery = KustoQuerySummarizer.Summarize(query);
-        var sanitizedQuery = KustoQuerySanitizer.Sanitize(query);
+        var info = KustoProcessor.Process(shouldSummarize: true, shouldSanitize: true, query);
 
-        Assert.Equal(expectedSummary, summarizedQuery);
-        Assert.Equal(expectedSanitizedQuery, sanitizedQuery);
+        Assert.Equal(expectedSummary, info.Summarized);
+        Assert.Equal(expectedSanitizedQuery, info.Sanitized);
     }
 }

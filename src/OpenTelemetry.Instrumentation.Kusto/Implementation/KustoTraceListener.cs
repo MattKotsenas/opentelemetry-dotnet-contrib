@@ -132,20 +132,19 @@ internal sealed class KustoTraceListener : KustoUtils.ITraceListener
             if (!text.IsEmpty)
             {
                 var queryText = text.ToString();
-                var summarizedQuery = KustoQuerySummarizer.Summarize(queryText);
-                var sanitizedQuery = KustoQuerySanitizer.Sanitize(queryText);
+                var info = KustoProcessor.Process(shouldSummarize: true, shouldSanitize: KustoInstrumentation.TracingOptions.RecordQueryText, queryText);
 
                 // Set sanitized query text if configured
                 if (KustoInstrumentation.TracingOptions.RecordQueryText)
                 {
-                    activity.SetTag(SemanticConventions.AttributeDbQueryText, sanitizedQuery);
+                    activity.SetTag(SemanticConventions.AttributeDbQueryText, info.Sanitized);
                 }
 
                 // Set query summary and use it as display name per spec
-                if (!string.IsNullOrEmpty(summarizedQuery))
+                if (!string.IsNullOrEmpty(info.Summarized))
                 {
-                    activity.SetTag(SemanticConventions.AttributeDbQuerySummary, summarizedQuery);
-                    activity.DisplayName = summarizedQuery;
+                    activity.SetTag(SemanticConventions.AttributeDbQuerySummary, info.Summarized);
+                    activity.DisplayName = info.Summarized!;
                 }
                 else
                 {
