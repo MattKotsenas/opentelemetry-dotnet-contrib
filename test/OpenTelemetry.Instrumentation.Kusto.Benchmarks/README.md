@@ -18,6 +18,8 @@ option number from the list of options shown on the Console window.
 
 ## Results
 
+// TODO: Includes private fixes in Kusto-Query-Langugage
+
 ```
 
 BenchmarkDotNet v0.15.6, Windows 11 (10.0.26100.7092/24H2/2024Update/HudsonValley)
@@ -30,6 +32,6 @@ Intel Core i9-10940X CPU 3.30GHz (Max: 3.31GHz), 1 CPU, 28 logical and 14 physic
 ```
 | Method                      | Mean     | Error    | StdDev   | Gen0   | Gen1   | Allocated |
 |---------------------------- |---------:|---------:|---------:|-------:|-------:|----------:|
-| ProcessSummarizeAndSanitize | 29.53 μs | 0.587 μs | 0.603 μs | 4.8523 | 0.4578 |  47.91 KB |
-| ProcessSummarizeOnly        | 26.75 μs | 0.532 μs | 1.190 μs | 4.7607 | 0.3662 |  46.77 KB |
-| ProcessSanitizeOnly         | 25.35 μs | 0.481 μs | 0.426 μs | 4.8523 |      - |  47.74 KB |
+| ProcessSummarizeAndSanitize | 27.61 μs | 0.549 μs | 0.887 μs | 3.8452 | 0.2441 |  38.03 KB |
+| ProcessSummarizeOnly        | 24.31 μs | 0.472 μs | 0.763 μs | 3.7537 | 0.3662 |   36.9 KB |
+| ProcessSanitizeOnly         | 24.21 μs | 0.448 μs | 0.440 μs | 3.8452 | 0.2136 |  37.87 KB |
