@@ -30,8 +30,8 @@ Intel Core i9-10940X CPU 3.30GHz (Max: 3.31GHz), 1 CPU, 28 logical and 14 physic
 
 
 ```
-| Method                      | Mean     | Error    | StdDev   | Gen0   | Gen1   | Allocated |
-|---------------------------- |---------:|---------:|---------:|-------:|-------:|----------:|
-| ProcessSummarizeAndSanitize | 25.24 μs | 0.490 μs | 0.459 μs | 2.8381 |      - |  27.94 KB |
-| ProcessSummarizeOnly        | 22.30 μs | 0.436 μs | 0.408 μs | 2.7161 | 0.2136 |  26.81 KB |
-| ProcessSanitizeOnly         | 23.91 μs | 0.417 μs | 0.528 μs | 2.8076 | 0.1526 |  27.73 KB |
+| Method                      | Mean     | Error    | StdDev   | Median   | Gen0   | Gen1   | Allocated |
+|---------------------------- |---------:|---------:|---------:|---------:|-------:|-------:|----------:|
+| ProcessSummarizeAndSanitize | 19.76 μs | 1.635 μs | 4.822 μs | 17.21 μs | 1.5869 | 0.0305 |  15.87 KB |
+| ProcessSummarizeOnly        | 13.69 μs | 0.270 μs | 0.420 μs | 13.51 μs | 1.5106 | 0.0305 |   14.9 KB |
+| ProcessSanitizeOnly         | 16.89 μs | 0.478 μs | 1.342 μs | 16.82 μs | 1.5869 | 0.0305 |   15.7 KB |
