@@ -23,8 +23,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Kusto.Data" />
-    <!--<PackageReference Include="Microsoft.Azure.Kusto.Language" />-->
-    <ProjectReference Include="$(RepoRoot)\..\Kusto-Query-Language\src\Kusto.Language\Kusto.Language.csproj" />
+    <PackageReference Include="Microsoft.Azure.Kusto.Language" />
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="OpenTelemetry.Api" />
     <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" />
