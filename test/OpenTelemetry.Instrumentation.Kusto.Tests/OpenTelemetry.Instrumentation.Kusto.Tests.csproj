@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>$(SupportedNetTargets)</TargetFrameworks>
@@ -9,6 +9,7 @@
     <PackageReference Include="Microsoft.Azure.Kusto.Data" />
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" />
     <PackageReference Include="Testcontainers.Kusto" />
+    <PackageReference Include="Verify.Xunit" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,8 +25,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <EmbeddedResource Include="KustoTestCases.json" LogicalName="KustoTestCases.json" CopyToOutputDirectory="Always" /> -->
     <EmbeddedResource Include="kusto.Dockerfile" LogicalName="kusto.Dockerfile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Verify adds an implicit using for the test framework, however because we use shared files, remove it to avoid
+      an unnecessary using warning.
+     -->
+    <Using Remove="Xunit" />
   </ItemGroup>
 
 </Project>

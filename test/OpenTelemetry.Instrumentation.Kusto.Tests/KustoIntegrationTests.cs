@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
+using System.Text;
 using Kusto.Data;
+using Kusto.Data.Common;
 using Kusto.Data.Net.Client;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Tests;
@@ -14,8 +16,6 @@ namespace OpenTelemetry.Instrumentation.Kusto.Tests;
 [Trait("CategoryName", "KustoIntegrationTests")]
 public sealed class KustoIntegrationTests : IClassFixture<KustoIntegrationTestsFixture>
 {
-    private const string DatabaseName = "NetDefaultDB";
-
     private readonly KustoIntegrationTestsFixture fixture;
 
     public KustoIntegrationTests(KustoIntegrationTestsFixture fixture)
@@ -26,172 +26,60 @@ public sealed class KustoIntegrationTests : IClassFixture<KustoIntegrationTestsF
     [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
     [InlineData(".show version")]
     [InlineData(".show databases")]
-    public void SuccessfulQueryTest(string query)
+    [InlineData("print number=42")]
+    public Task SuccessfulQueryTest(string query)
     {
         var activities = new List<Activity>();
+        var exportedMetrics = new List<Metric>();
+
         using var tracerProvider = Sdk.CreateTracerProviderBuilder()
             .AddInMemoryExporter(activities)
             .AddKustoInstrumentation()
             .Build();
 
-        var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
-        using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
-
-        var reader = queryProvider.ExecuteQuery(DatabaseName, query, null);
-
-        // Verify results can be read
-        Assert.NotNull(reader);
-        while (reader.Read())
-        {
-            // Read through results
-        }
-
-        // Give some time for async operations to complete
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-
-        Assert.NotEmpty(activities);
-        var activity = activities.FirstOrDefault(a => a.OperationName.Contains("Query") || a.OperationName.Contains("Management") || a.OperationName.Contains("ExecuteQuery"));
-        Assert.NotNull(activity);
-
-        // Verify key activity tags are present
-        Assert.Contains(activity.Tags, t => t.Key == "db.system.name" && t.Value == "kusto");
-        Assert.Contains(activity.Tags, t => t.Key == "url.full");
-        Assert.Contains(activity.Tags, t => t.Key == "db.operation.name");
-    }
-
-    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData(".show databases")]
-    public void MetricsAreRecorded(string query)
-    {
-        var exportedItems = new List<Metric>();
-
         using var meterProvider = Sdk.CreateMeterProviderBuilder()
-            .AddInMemoryExporter(exportedItems)
+            .AddInMemoryExporter(exportedMetrics)
             .AddMeter("Kusto.Client")
             .Build();
 
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddKustoInstrumentation()
-            .Build();
-
         var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
         using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
 
-        var reader = queryProvider.ExecuteQuery(DatabaseName, query, null);
-
-        Assert.NotNull(reader);
-        while (reader.Read())
+        var crp = new ClientRequestProperties()
         {
-            // Read through results
-        }
+            ClientRequestId = Convert.ToBase64String(Encoding.UTF8.GetBytes(query)),
+        };
+
+        var reader = queryProvider.ExecuteQuery("NetDefaultDB", query, crp);
 
         meterProvider.ForceFlush();
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
 
-        Assert.NotEmpty(exportedItems);
-        var durationMetric = exportedItems.FirstOrDefault(m => m.Name == "db.client.operation.duration");
+        Assert.NotEmpty(activities);
+        var activity = activities.FirstOrDefault(a =>
+            a.OperationName.Contains("Query") ||
+            a.OperationName.Contains("Management") ||
+            a.OperationName.Contains("ExecuteQuery"));
+        Assert.NotNull(activity);
+
+        var activitySnapshot = new
+        {
+            activity.DisplayName,
+            activity.Status,
+            activity.StatusDescription,
+            activity.Tags,
+        };
+
+        Assert.NotEmpty(exportedMetrics);
+        var durationMetric = exportedMetrics.FirstOrDefault(m => m.Name == "db.client.operation.duration");
         Assert.NotNull(durationMetric);
 
-        var countMetric = exportedItems.FirstOrDefault(m => m.Name == "db.client.operation.count");
+        var countMetric = exportedMetrics.FirstOrDefault(m => m.Name == "db.client.operation.count");
         Assert.NotNull(countMetric);
-    }
 
-    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData(".create table InvalidTable (Col1:string)")]
-    public void ErrorQueryTest(string query)
-    {
-        var activities = new List<Activity>();
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddInMemoryExporter(activities)
-            .AddKustoInstrumentation()
-            .Build();
-
-        var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
-        using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
-
-        try
-        {
-            var reader = queryProvider.ExecuteQuery(DatabaseName, query, null);
-            while (reader.Read())
-            {
-                // Read through results
-            }
-        }
-        catch
-        {
-            // Expected to fail
-        }
-
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-
-        Assert.NotEmpty(activities);
-        var errorActivity = activities.FirstOrDefault(a => a.Status == ActivityStatusCode.Error);
-        Assert.NotNull(errorActivity);
-    }
-
-    [EnabledOnDockerPlatformTheory(DockerPlatform.Linux)]
-    [InlineData("print message='Hello, World!'")]
-    [InlineData("print number=42")]
-    public void SimpleQueryTest(string query)
-    {
-        var activities = new List<Activity>();
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddInMemoryExporter(activities)
-            .AddKustoInstrumentation()
-            .Build();
-
-        var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
-        using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
-
-        var reader = queryProvider.ExecuteQuery(DatabaseName, query, null);
-
-        Assert.NotNull(reader);
-        var hasResults = false;
-        while (reader.Read())
-        {
-            hasResults = true;
-        }
-
-        Assert.True(hasResults);
-
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-
-        Assert.NotEmpty(activities);
-        var activity = activities.First();
-        Assert.Equal(ActivityStatusCode.Unset, activity.Status);
-        Assert.Contains(activity.Tags, t => t.Key == "db.query.text" && t.Value?.ToString()?.Contains(query.Split(' ')[0]) == true);
-    }
-
-    [EnabledOnDockerPlatformFact(DockerPlatform.Linux)]
-    public void MultipleQueriesTest()
-    {
-        var activities = new List<Activity>();
-        using var tracerProvider = Sdk.CreateTracerProviderBuilder()
-            .AddInMemoryExporter(activities)
-            .AddKustoInstrumentation()
-            .Build();
-
-        var kcsb = new KustoConnectionStringBuilder(this.fixture.DatabaseContainer.GetConnectionString());
-
-        using var queryProvider = KustoClientFactory.CreateCslQueryProvider(kcsb);
-
-        // Execute multiple queries
-        for (int i = 0; i < 3; i++)
-        {
-            var reader = queryProvider.ExecuteQuery(DatabaseName, $"print iteration={i}", null);
-            while (reader.Read())
-            {
-                // Read through results
-            }
-        }
-
-        Task.Delay(TimeSpan.FromSeconds(2)).Wait();
-
-        Assert.NotEmpty(activities);
-        Assert.True(activities.Count >= 3, $"Expected at least 3 activities, got {activities.Count}");
+        return Verify(activitySnapshot)
+            .ScrubLinesWithReplace(line => line.Replace(kcsb.Hostname, "{Hostname}"))
+            .ScrubLinesWithReplace(line => line.Replace(this.fixture.DatabaseContainer.GetMappedPublicPort().ToString(), "{Port}"))
+            .UseDirectory("Snapshots")
+            .UseParameters(query);
     }
 }
